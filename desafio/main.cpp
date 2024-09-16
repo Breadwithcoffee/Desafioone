@@ -35,9 +35,16 @@ int *ultimosegundo = nullptr;
 int sizeprimer = 0; int sizearraymomentaneo = 0; int sizeultimo = 0;
 unsigned long tiempoanterior = 0;
 unsigned long intervalo = 1000;
+// Pulsadore
+const int botoninicioPin = 2;
+const int botondetenerPin = 3;
+
+bool adquiriendodatos = false;
 
 void setup(){
     Serial.begin(9600);
+    pinMode(botoninicioPin , INPUT_PULLUP);
+    pinMode(botondetenerPin , INPUT_PULLUP);
 }
 
 // se tenia una idea que fue modificada ya que aveces el monitor serial no lee los ceros , la idea era leer los ceros de los array para asi contar
@@ -78,9 +85,18 @@ int cambiodesigno(int *array , int size){
 
 void loop(){
     unsigned long tiempoactual = millis();
+    bool begin = digitalRead(botoninicioPin) == LOW;
+    bool done = digitalRead(botondetenerPin) == LOW;
+
+    if(begin){
+        adquiriendodatos = true;
+    }
+    if (done){
+        adquiriendodatos = false;
+    }
+
+ if (adquiriendodatos){
     val = analogRead(analogPin);
-
-
     if(tiempoactual - tiempoanterior >= intervalo){
 
         if(sizeprimer > 0){
@@ -151,4 +167,5 @@ void loop(){
         Serial.print("valor: ");
         Serial.println(val);
     }
+}
 }

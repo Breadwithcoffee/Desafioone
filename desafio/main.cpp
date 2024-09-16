@@ -20,67 +20,135 @@ void loop()
 */
 // C++ code
 //
-int analogPing = 0;
+
+
+
+
+// RASTREO Y MONITOREO DE LOS VALORES PRIMRE Y SEGUNDO SEGUNDO.
+
+
+int analogPin = 0;
 int val = 0;
-int contadorarray = 0;
-int oscilaciones = 0;
-int frecuencia = 0;
-unsigned long segundosanterior = 0;
-const long intervalos = 1000;
-int maximo = 0;
-int minimo = 0;
-int array0[201];
-int array1[201];
-int array2[201];
+int *primersegundo = nullptr;
+int *arraymomentaneo = nullptr;
+int *ultimosegundo = nullptr;
+int sizeprimer = 0; int sizearraymomentaneo = 0; int sizeultimo = 0;
+unsigned long tiempoanterior = 0;
+unsigned long intervalo = 1000;
 
-void picosfuncion(){
-  maximo = array0[0];
-  minimo = array0[0];
-  for (int i = 0; i < 201; i++){
-    if(array0[i] > maximo) maximo = array0[i];
-    if (array0[i] < minimo) minimo = array0[i];
-  }
+void setup(){
+    Serial.begin(9600);
 }
 
-void setup() {
-  Serial.begin(9600);
+// se tenia una idea que fue modificada ya que aveces el monitor serial no lee los ceros , la idea era leer los ceros de los array para asi contar
+// su frecuencia
+
+/*int ceros(int *array, int size) {
+  int contador = 0;
+  bool encero = false;
+
+  for (int i = 0; i < size; i++) {
+    if (array[i] >= -3 && array[i] <= 3) {
+      if (!encero) {
+        contador++;
+        encero = true;
+      }
+    } else {
+      encero= false;
+    }
+  }
+
+  return contador;
+}*/
+
+// Ahora la mejor opcion es contar cada cuanto los valores pasan de negativo a positivos y vicecersa.
+
+int cambiodesigno(int *array , int size){
+    int contador = 0;
+    if(size < 2){
+        return contador;
+    }
+    for(int i = 0; i < size - 1; i++){
+        if((array[i] < 0 && array[i+1] >= 0) || (array[i] >= 0 && array[i+1] < 0)){
+            contador++;
+        }
+    }
+    return contador;
 }
 
-void loop() {
-  unsigned long actualsegundos = millis();
+void loop(){
+    unsigned long tiempoactual = millis();
+    val = analogRead(analogPin);
 
-  val = analogRead(analogPing);
 
-  if (actualsegundos - segundosanterior >= intervalos) {
-    segundosanterior = actualsegundos;
+    if(tiempoactual - tiempoanterior >= intervalo){
 
-    if (contadorarray < 201) {
-      array0[contadorarray] = val;
-      contadorarray++;
-      if (contadorarray == 201){
-        picosfuncion();
-        for(int k = 0; k < 201 ; k++){
-          if(array0[k] == 0){
-            oscilaciones++;
-          }
+        if(sizeprimer > 0){
+            int maximoprimer = primersegundo[0];
+            for(int i = 1; i < sizeprimer; i++){
+                if(primersegundo[i] > maximoprimer){
+                    maximoprimer = primersegundo[i];
+                }
+            }
+            Serial.print("pico del primer segundo ");
+            Serial.println(maximoprimer);
+
+            int crucesdesigno = cambiodesigno(primersegundo, sizeprimer);
+            Serial.print("numero de ceros ");
+            Serial.println(crucesdesigno);
         }
-        frecuencia = (oscilaciones - 1) / 2;
 
-        for (int i = 0; i < 201; i++) {
-          array2[i] = array0[i];
-          array0[i] = 0;
+
+        if(sizearraymomentaneo > 0){
+            delete[] ultimosegundo;
+            ultimosegundo = new int[sizearraymomentaneo];
+            for(int i = 0; i < sizearraymomentaneo; i++){
+                ultimosegundo[i] = arraymomentaneo[i];
+            }
+            sizeultimo = sizearraymomentaneo;
         }
-      }
-    }
 
-    if (contadorarray == 201) {
-      for (int i = 0; i < 201; i++) {
-        array1[i] = array0[i];
-        array0[i] = 0;
-      }
-      contadorarray = 0;
-    }
 
-    Serial.println(val);
-  }
+        if(sizeultimo > 0){
+            int maximoultimo = ultimosegundo[0];
+            for(int i = 1; i < sizeultimo; i++){
+                if(ultimosegundo[i] > maximoultimo){
+                    maximoultimo = ultimosegundo[i];
+                }
+            }
+            Serial.print("pico del ultimo segundo ");
+            Serial.println(maximoultimo);
+        }
+
+
+        delete[] arraymomentaneo;
+        arraymomentaneo = new int[sizeprimer];
+        for(int i = 0; i < sizeprimer; i++){
+            arraymomentaneo[i] = primersegundo[i];
+        }
+        sizearraymomentaneo = sizeprimer;
+
+
+        delete[] primersegundo;
+        primersegundo = new int[1];
+        primersegundo[0] = val;
+        sizeprimer = 1;
+
+
+        tiempoanterior = tiempoactual;
+    } else {
+
+        int *nuevoarray = new int[sizeprimer + 1];
+        for(int i = 0; i < sizeprimer; i++){
+            nuevoarray[i] = primersegundo[i];
+        }
+        nuevoarray[sizeprimer] = val;
+
+        delete[] primersegundo;
+        primersegundo = nuevoarray;
+        sizeprimer++;
+
+        Serial.print("valor: ");
+        Serial.println(val);
+    }
 }

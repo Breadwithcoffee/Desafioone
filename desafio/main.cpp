@@ -26,7 +26,9 @@ void loop()
 
 // RASTREO Y MONITOREO DE LOS VALORES PRIMRE Y SEGUNDO SEGUNDO.
 
-
+#include <Adafruit_LiquidCrystal.h>
+int segundos = 0;
+Adafruit_LiquidCrystal lcd_1(0);
 int analogPin = 0;
 int val = 0;
 int *primersegundo = nullptr;
@@ -45,6 +47,11 @@ void setup(){
     Serial.begin(9600);
     pinMode(botoninicioPin , INPUT_PULLUP);
     pinMode(botondetenerPin , INPUT_PULLUP);
+    lcd_1.begin(16, 2);
+
+    lcd_1.print("Iniciando....");
+    delay(3000);
+    lcd_1.clear();
 }
 
 // se tenia una idea que fue modificada ya que aveces el monitor serial no lee los ceros , la idea era leer los ceros de los array para asi contar
@@ -108,6 +115,11 @@ void loop(){
             }
             Serial.print("pico del primer segundo ");
             Serial.println(maximoprimer);
+            lcd_1.begin(16, 2);
+            lcd_1.print("pico del primer segundo");
+            lcd_1.setCursor(0, 1);
+            lcd_1.print(maximoprimer);
+
 
             int crucesdesigno = cambiodesigno(primersegundo, sizeprimer);
             Serial.print("numero de ceros ");

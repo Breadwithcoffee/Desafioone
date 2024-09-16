@@ -181,3 +181,120 @@ void loop(){
     }
 }
 }
+
+
+// se ha corregido todo el pasado debido a errores, el primer error es que cuando me imprime en el lcd deja de adquirir datos, el segundo es
+// por optimizacion ya que en realidad no necesitamos el primer segundo solo nos interesa el segundo antes de detener la ejecucion.
+// me estoy basando en una radio.
+
+
+int analogPin = 0;
+int val = 0;
+int *arraymomentaneo = nullptr;
+int *ultimosegundo = nullptr;
+int sizearraymomentaneo = 0;
+int sizeultimo = 0;
+float a = 0;
+
+unsigned long tiempoanterior = 0;
+unsigned long intervalo = 1000;
+
+const int botoninicioPin = 2;
+const int botondetenerPin = 3;
+
+bool adquiriendodatos = false;
+
+void setup() {
+    Serial.begin(9600);
+    pinMode(botoninicioPin, INPUT_PULLUP);
+    pinMode(botondetenerPin, INPUT_PULLUP);
+
+    lcd_1.begin(16, 2);
+    lcd_1.print("encendiendo....");
+    delay(2000);
+    lcd_1.clear();
+}
+int cambiodesigno(int *array, int size) {
+    int contador = 0;
+    if (size < 2) {
+        return contador;
+    }
+    for (int i = 0; i < size - 1; i++) {
+        if ((array[i] < 0 && array[i + 1] >= 0) || (array[i] >= 0 && array[i + 1] < 0)) {
+            contador++;
+        }
+    }
+    return contador;
+}
+
+void loop() {
+    unsigned long tiempoactual = millis();
+    bool begin = digitalRead(botoninicioPin) == LOW;
+    bool done = digitalRead(botondetenerPin) == LOW;
+    val = analogRead(analogPin);
+
+    if (begin) {
+        adquiriendodatos = true;
+    }
+    if (done) {
+        adquiriendodatos = false;
+
+
+        if (sizeultimo > 0) {
+            int maximoultimo = ultimosegundo[0];
+            for (int i = 1; i < sizeultimo; i++) {
+                if (ultimosegundo[i] > maximoultimo) {
+                    maximoultimo = ultimosegundo[i];
+                }
+            }
+            Serial.print("pico del ultimo segundo: ");
+            Serial.println(maximoultimo);
+            a = maximoultimo;
+            a = a/100;
+            lcd_1.clear();
+            lcd_1.print("amplitud: ");
+            lcd_1.setCursor(0, 1);
+            lcd_1.print(a);
+            lcd_1.print(" V");
+        }
+    }
+
+    if (adquiriendodatos) {
+        if (tiempoactual - tiempoanterior >= intervalo) {
+
+
+            if (sizearraymomentaneo > 0) {
+                delete[] ultimosegundo;
+                ultimosegundo = new int[sizearraymomentaneo];
+                for (int i = 0; i < sizearraymomentaneo; i++) {
+                    ultimosegundo[i] = arraymomentaneo[i];
+                }
+                sizeultimo = sizearraymomentaneo;
+            }
+
+            delete[] arraymomentaneo;
+            arraymomentaneo = new int[1];
+            arraymomentaneo[0] = val;
+            sizearraymomentaneo = 1;
+
+            tiempoanterior = tiempoactual;
+
+        } else {
+
+            int *nuevoarray = new int[sizearraymomentaneo + 1];
+            for (int i = 0; i < sizearraymomentaneo; i++) {
+                nuevoarray[i] = arraymomentaneo[i];
+            }
+            nuevoarray[sizearraymomentaneo] = val;
+
+            delete[] arraymomentaneo;
+            arraymomentaneo = nuevoarray;
+            sizearraymomentaneo++;
+
+            Serial.print("valor: ");
+            Serial.println(val);
+        }
+    }
+}
+
+// ahora solo miramos el ultimo segundo y  los valores aparecen al final de presionar el otro boton.

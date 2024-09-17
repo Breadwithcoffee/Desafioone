@@ -311,6 +311,7 @@ int *ultimosegundo = nullptr;
 int sizearraymomentaneo = 0;
 int sizeultimo = 0;
 float a = 0;
+float frecuencia = 0;
 Adafruit_LiquidCrystal lcd_1(0);
 
 unsigned long tiempoanterior = 0;
@@ -355,14 +356,13 @@ void loop() {
 
     if (begin) {
         adquiriendodatos = true;
-        detener = false; //
+        detener = false;
         lcd_1.clear();
         lcd_1.print("adquiriendo datos");
     }
 
     if (done) {
         if (!detener) {
-
             detener = true;
             tiempodetener = tiempoactual;
             lcd_1.clear();
@@ -371,7 +371,6 @@ void loop() {
     }
 
     if (detener) {
-
         if (tiempoactual - tiempodetener < 3000) {
             if (adquiriendodatos) {
                 if (tiempoactual - tiempoanterior >= intervalo) {
@@ -407,7 +406,6 @@ void loop() {
                 }
             }
         } else {
-
             adquiriendodatos = false;
 
             if (sizeultimo > 0) {
@@ -426,14 +424,24 @@ void loop() {
                 lcd_1.setCursor(0, 1);
                 lcd_1.print(a);
                 lcd_1.print(" V");
-            }
+              delay(2000);
 
+
+                int cambios = cambiodesigno(ultimosegundo, sizeultimo);
+                Serial.print("cambios de signo: ");
+                Serial.println(cambios/2);
+     lcd_1.clear();
+lcd_1.print("Frecuencia:");
+lcd_1.setCursor(5, 1);
+lcd_1.print(cambios / 2);
+lcd_1.print(" Hz");
+
+            }
 
             delete[] ultimosegundo;
             ultimosegundo = nullptr;
             delete[] arraymomentaneo;
             arraymomentaneo = nullptr;
-
 
             sizearraymomentaneo = 0;
             sizeultimo = 0;
@@ -472,5 +480,8 @@ void loop() {
         }
     }
 }
+
+// existen limitaciones con el tinkercad o me falto optimizacion, terminado los puntos de frecuencia y amplitud usando puntadores y memoria
+// dinamica ultima parte diferenciar una funcion a otra.
 
 

@@ -382,7 +382,6 @@ void loop() {
                         }
                         sizeultimo = sizearraymomentaneo;
                     }
-
                     delete[] arraymomentaneo;
                     arraymomentaneo = new int[1];
                     arraymomentaneo[0] = val;
@@ -424,19 +423,22 @@ void loop() {
                 lcd_1.setCursor(0, 1);
                 lcd_1.print(a);
                 lcd_1.print(" V");
-              delay(2000);
+                delay(2000);
 
 
                 int cambios = cambiodesigno(ultimosegundo, sizeultimo);
-                Serial.print("cambios de signo: ");
-                Serial.println(cambios/2);
-     lcd_1.clear();
-lcd_1.print("Frecuencia:");
-lcd_1.setCursor(5, 1);
-lcd_1.print(cambios / 2);
-lcd_1.print(" Hz");
+                frecuencia = cambios / 2;
 
+                Serial.print("frecuencia calculada: ");
+                Serial.println(frecuencia);
+                lcd_1.clear();
+                lcd_1.print("frecuencia:");
+                lcd_1.setCursor(5, 1);
+                lcd_1.print(frecuencia);
+                lcd_1.print(" Hz");
+                delay(2000);
             }
+
 
             delete[] ultimosegundo;
             ultimosegundo = nullptr;
@@ -449,6 +451,7 @@ lcd_1.print(" Hz");
     } else if (adquiriendodatos) {
         if (tiempoactual - tiempoanterior >= intervalo) {
             if (sizearraymomentaneo > 0) {
+
                 delete[] ultimosegundo;
                 ultimosegundo = new int[sizearraymomentaneo];
                 for (int i = 0; i < sizearraymomentaneo; i++) {
@@ -456,6 +459,7 @@ lcd_1.print(" Hz");
                 }
                 sizeultimo = sizearraymomentaneo;
             }
+
 
             delete[] arraymomentaneo;
             arraymomentaneo = new int[1];
@@ -465,6 +469,7 @@ lcd_1.print(" Hz");
             tiempoanterior = tiempoactual;
 
         } else {
+
             int *nuevoarray = new int[sizearraymomentaneo + 1];
             for (int i = 0; i < sizearraymomentaneo; i++) {
                 nuevoarray[i] = arraymomentaneo[i];
@@ -480,6 +485,7 @@ lcd_1.print(" Hz");
         }
     }
 }
+
 
 // existen limitaciones con el tinkercad o me falto optimizacion, terminado los puntos de frecuencia y amplitud usando puntadores y memoria
 // dinamica ultima parte diferenciar una funcion a otra.

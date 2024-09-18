@@ -335,6 +335,38 @@ void setup() {
     lcd_1.clear();
 }
 
+int* valoresmayores(int* array, int size) {
+    const int sizemax = 100;
+    int* mayores = new int[sizemax];
+    int count = 0;
+
+    if (size == 0) {
+        delete[] mayores;
+        return nullptr;
+    }
+
+    int mayoractual = array[0];
+    mayores[count++] = mayoractual;
+
+    for (int i = 1; i < size; i++) {
+        if (array[i] > mayoractual) {
+            mayoractual = array[i];
+            if (count < sizemax) {
+                mayores[count++] = mayoractual;
+            }
+        }
+    }
+
+    int* resultado = new int[count];
+    for (int i = 0; i < count; i++) {
+        resultado[i] = mayores[i];
+    }
+
+    delete[] mayores;
+
+    return resultado;
+}
+
 int cambiodesigno(int *array, int size) {
     int contador = 0;
     if (size < 2) {
@@ -353,6 +385,7 @@ void loop() {
     bool begin = digitalRead(botoninicioPin) == LOW;
     bool done = digitalRead(botondetenerPin) == LOW;
     val = analogRead(analogPin);
+    delay(120);
 
     if (begin) {
         adquiriendodatos = true;
@@ -416,15 +449,13 @@ void loop() {
                 }
                 Serial.print("pico del ultimo segundo: ");
                 Serial.println(maximoultimo);
-                a = maximoultimo;
-                a = a / 100;
+                a = maximoultimo / 100;
                 lcd_1.clear();
                 lcd_1.print("amplitud: ");
                 lcd_1.setCursor(0, 1);
                 lcd_1.print(a);
                 lcd_1.print(" V");
                 delay(2000);
-
 
                 int cambios = cambiodesigno(ultimosegundo, sizeultimo);
                 frecuencia = cambios / 2;
@@ -437,8 +468,23 @@ void loop() {
                 lcd_1.print(frecuencia);
                 lcd_1.print(" Hz");
                 delay(2000);
-            }
 
+                int* maxx = valoresmayores(ultimosegundo, sizeultimo);
+                if (maxx != nullptr) {
+                    for (int i = 0; i < sizeultimo - 1; i++) {
+                        Serial.print("Comparando ");
+                        Serial.print(maxx[i]);
+                        Serial.print(" y ");
+                        Serial.println(maxx[i + 1]);
+                        if (maxx[i] < maxx[i + 1]) {
+                            Serial.println("Triangular");
+                        } else {
+                            Serial.println("S o C");
+                        }
+                    }
+                    delete[] maxx;
+                }
+            }
 
             delete[] ultimosegundo;
             ultimosegundo = nullptr;
@@ -451,7 +497,6 @@ void loop() {
     } else if (adquiriendodatos) {
         if (tiempoactual - tiempoanterior >= intervalo) {
             if (sizearraymomentaneo > 0) {
-
                 delete[] ultimosegundo;
                 ultimosegundo = new int[sizearraymomentaneo];
                 for (int i = 0; i < sizearraymomentaneo; i++) {
@@ -459,7 +504,6 @@ void loop() {
                 }
                 sizeultimo = sizearraymomentaneo;
             }
-
 
             delete[] arraymomentaneo;
             arraymomentaneo = new int[1];
@@ -469,7 +513,6 @@ void loop() {
             tiempoanterior = tiempoactual;
 
         } else {
-
             int *nuevoarray = new int[sizearraymomentaneo + 1];
             for (int i = 0; i < sizearraymomentaneo; i++) {
                 nuevoarray[i] = arraymomentaneo[i];
@@ -485,7 +528,6 @@ void loop() {
         }
     }
 }
-
 
 // existen limitaciones con el tinkercad o me falto optimizacion, terminado los puntos de frecuencia y amplitud usando puntadores y memoria
 // dinamica ultima parte diferenciar una funcion a otra.

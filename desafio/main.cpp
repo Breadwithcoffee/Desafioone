@@ -334,7 +334,6 @@ void setup() {
     delay(2000);
     lcd_1.clear();
 }
-
 int* valoresmayores(int* array, int size) {
     const int sizemax = 100;
     int* mayores = new int[sizemax];
@@ -345,16 +344,25 @@ int* valoresmayores(int* array, int size) {
         return nullptr;
     }
 
+
     int mayoractual = array[0];
-    mayores[count++] = mayoractual;
+    if (mayoractual > 0) {
+        mayores[count++] = mayoractual;
+    }
 
     for (int i = 1; i < size; i++) {
-        if (array[i] > mayoractual) {
+        if (array[i] > mayoractual && array[i] > 0) {
             mayoractual = array[i];
             if (count < sizemax) {
                 mayores[count++] = mayoractual;
             }
         }
+    }
+
+
+    if (count == 0) {
+        delete[] mayores;
+        return nullptr;
     }
 
     int* resultado = new int[count];
@@ -363,9 +371,9 @@ int* valoresmayores(int* array, int size) {
     }
 
     delete[] mayores;
-
     return resultado;
 }
+
 
 int cambiodesigno(int *array, int size) {
     int contador = 0;
@@ -441,7 +449,7 @@ void loop() {
             adquiriendodatos = false;
 
             if (sizeultimo > 0) {
-                int maximoultimo = ultimosegundo[0];
+               float maximoultimo = ultimosegundo[0];
                 for (int i = 1; i < sizeultimo; i++) {
                     if (ultimosegundo[i] > maximoultimo) {
                         maximoultimo = ultimosegundo[i];
@@ -468,22 +476,25 @@ void loop() {
                 lcd_1.print(frecuencia);
                 lcd_1.print(" Hz");
                 delay(2000);
+int* maxx = valoresmayores(ultimosegundo, sizeultimo);
+if (maxx != nullptr) {
+    for (int i = 0; i < sizeultimo - 1; i++) {
 
-                int* maxx = valoresmayores(ultimosegundo, sizeultimo);
-                if (maxx != nullptr) {
-                    for (int i = 0; i < sizeultimo - 1; i++) {
-                        Serial.print("Comparando ");
-                        Serial.print(maxx[i]);
-                        Serial.print(" y ");
-                        Serial.println(maxx[i + 1]);
-                        if (maxx[i] < maxx[i + 1]) {
-                            Serial.println("Triangular");
-                        } else {
-                            Serial.println("S o C");
-                        }
-                    }
-                    delete[] maxx;
-                }
+        if (maxx[i] > 0 && maxx[i + 1] > 0) {
+            Serial.print("Comparando ");
+            Serial.print(maxx[i]);
+            Serial.print(" y ");
+            Serial.println(maxx[i + 1]);
+            if (maxx[i] < maxx[i + 1]) {
+                Serial.println("Triangular");
+            } else {
+                Serial.println("S o C");
+            }
+        }
+    }
+    delete[] maxx;
+}
+
             }
 
             delete[] ultimosegundo;
@@ -528,7 +539,6 @@ void loop() {
         }
     }
 }
-
 // existen limitaciones con el tinkercad o me falto optimizacion, terminado los puntos de frecuencia y amplitud usando puntadores y memoria
 // dinamica ultima parte diferenciar una funcion a otra.
 

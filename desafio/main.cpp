@@ -303,7 +303,8 @@ void loop() {
 // cambios como despues de detener que me lea durante otros 3 segundos para estar seguros del cambio
 // mas sugerencias en el lcd
 #include <Adafruit_LiquidCrystal.h>
-
+int tri = 0;
+int soc = 0;
 int analogPin = 0;
 int val = 0;
 int *arraymomentaneo = nullptr;
@@ -311,18 +312,16 @@ int *ultimosegundo = nullptr;
 int sizearraymomentaneo = 0;
 int sizeultimo = 0;
 float a = 0;
-float frecuencia = 0;
+int frecuencia = 0;
 Adafruit_LiquidCrystal lcd_1(0);
 
 unsigned long tiempoanterior = 0;
 unsigned long intervalo = 1000;
-unsigned long tiempodetener = 0;
 
 const int botoninicioPin = 2;
 const int botondetenerPin = 3;
 
 bool adquiriendodatos = false;
-bool detener = false;
 
 void setup() {
     Serial.begin(9600);
@@ -334,6 +333,7 @@ void setup() {
     delay(2000);
     lcd_1.clear();
 }
+
 int* valoresmayores(int* array, int size) {
     const int sizemax = 100;
     int* mayores = new int[sizemax];
@@ -343,7 +343,6 @@ int* valoresmayores(int* array, int size) {
         delete[] mayores;
         return nullptr;
     }
-
 
     int mayoractual = array[0];
     if (mayoractual > 0) {
@@ -359,7 +358,6 @@ int* valoresmayores(int* array, int size) {
         }
     }
 
-
     if (count == 0) {
         delete[] mayores;
         return nullptr;
@@ -374,9 +372,8 @@ int* valoresmayores(int* array, int size) {
     return resultado;
 }
 
-
 int cambiodesigno(int *array, int size) {
-    int contador = 0;
+    float contador = 0;
     if (size < 2) {
         return contador;
     }
@@ -393,119 +390,16 @@ void loop() {
     bool begin = digitalRead(botoninicioPin) == LOW;
     bool done = digitalRead(botondetenerPin) == LOW;
     val = analogRead(analogPin);
-    delay(120);
+
+
 
     if (begin) {
         adquiriendodatos = true;
-        detener = false;
         lcd_1.clear();
         lcd_1.print("adquiriendo datos");
     }
 
-    if (done) {
-        if (!detener) {
-            detener = true;
-            tiempodetener = tiempoactual;
-            lcd_1.clear();
-            lcd_1.print("Leyendo datos...");
-        }
-    }
-
-    if (detener) {
-        if (tiempoactual - tiempodetener < 3000) {
-            if (adquiriendodatos) {
-                if (tiempoactual - tiempoanterior >= intervalo) {
-                    if (sizearraymomentaneo > 0) {
-                        delete[] ultimosegundo;
-                        ultimosegundo = new int[sizearraymomentaneo];
-                        for (int i = 0; i < sizearraymomentaneo; i++) {
-                            ultimosegundo[i] = arraymomentaneo[i];
-                        }
-                        sizeultimo = sizearraymomentaneo;
-                    }
-                    delete[] arraymomentaneo;
-                    arraymomentaneo = new int[1];
-                    arraymomentaneo[0] = val;
-                    sizearraymomentaneo = 1;
-
-                    tiempoanterior = tiempoactual;
-
-                } else {
-                    int *nuevoarray = new int[sizearraymomentaneo + 1];
-                    for (int i = 0; i < sizearraymomentaneo; i++) {
-                        nuevoarray[i] = arraymomentaneo[i];
-                    }
-                    nuevoarray[sizearraymomentaneo] = val;
-
-                    delete[] arraymomentaneo;
-                    arraymomentaneo = nuevoarray;
-                    sizearraymomentaneo++;
-
-                    Serial.print("valor: ");
-                    Serial.println(val);
-                }
-            }
-        } else {
-            adquiriendodatos = false;
-
-            if (sizeultimo > 0) {
-               float maximoultimo = ultimosegundo[0];
-                for (int i = 1; i < sizeultimo; i++) {
-                    if (ultimosegundo[i] > maximoultimo) {
-                        maximoultimo = ultimosegundo[i];
-                    }
-                }
-                Serial.print("pico del ultimo segundo: ");
-                Serial.println(maximoultimo);
-                a = maximoultimo / 100;
-                lcd_1.clear();
-                lcd_1.print("amplitud: ");
-                lcd_1.setCursor(0, 1);
-                lcd_1.print(a);
-                lcd_1.print(" V");
-                delay(2000);
-
-                int cambios = cambiodesigno(ultimosegundo, sizeultimo);
-                frecuencia = cambios / 2;
-
-                Serial.print("frecuencia calculada: ");
-                Serial.println(frecuencia);
-                lcd_1.clear();
-                lcd_1.print("frecuencia:");
-                lcd_1.setCursor(5, 1);
-                lcd_1.print(frecuencia);
-                lcd_1.print(" Hz");
-                delay(2000);
-int* maxx = valoresmayores(ultimosegundo, sizeultimo);
-if (maxx != nullptr) {
-    for (int i = 0; i < sizeultimo - 1; i++) {
-
-        if (maxx[i] > 0 && maxx[i + 1] > 0) {
-            Serial.print("Comparando ");
-            Serial.print(maxx[i]);
-            Serial.print(" y ");
-            Serial.println(maxx[i + 1]);
-            if (maxx[i] < maxx[i + 1]) {
-                Serial.println("Triangular");
-            } else {
-                Serial.println("S o C");
-            }
-        }
-    }
-    delete[] maxx;
-}
-
-            }
-
-            delete[] ultimosegundo;
-            ultimosegundo = nullptr;
-            delete[] arraymomentaneo;
-            arraymomentaneo = nullptr;
-
-            sizearraymomentaneo = 0;
-            sizeultimo = 0;
-        }
-    } else if (adquiriendodatos) {
+    if (adquiriendodatos) {
         if (tiempoactual - tiempoanterior >= intervalo) {
             if (sizearraymomentaneo > 0) {
                 delete[] ultimosegundo;
@@ -538,7 +432,82 @@ if (maxx != nullptr) {
             Serial.println(val);
         }
     }
+
+    if (done) {
+        lcd_1.clear();
+        if (sizeultimo > 0) {
+            float maximoultimo = ultimosegundo[0];
+            for (int i = 1; i < sizeultimo; i++) {
+                if (ultimosegundo[i] > maximoultimo) {
+                    maximoultimo = ultimosegundo[i];
+                }
+            }
+            Serial.print("pico del ultimo segundo: ");
+            Serial.println(maximoultimo);
+            a = maximoultimo / 100;
+            lcd_1.print("amplitud: ");
+            lcd_1.setCursor(0, 1);
+            lcd_1.print(a);
+            lcd_1.print(" V");
+            delay(2000);
+
+            float cambios = cambiodesigno(ultimosegundo, sizeultimo);
+            frecuencia = cambios/ 2;
+
+            Serial.print("frecuencia calculada: ");
+            Serial.println(frecuencia);
+            lcd_1.clear();
+            lcd_1.print("frecuencia:");
+            lcd_1.setCursor(5, 1);
+            lcd_1.print(frecuencia);
+            lcd_1.print(" Hz");
+            delay(2000);
+
+            lcd_1.clear();
+            int* maxx = valoresmayores(ultimosegundo, sizeultimo);
+            if (maxx != nullptr) {
+                for (int i = 0; i < sizeultimo - 1; i++) {
+                    if (maxx[i] > 0 && maxx[i + 1] > 0) {
+                        Serial.print("Comparando ");
+                        Serial.print(maxx[i]);
+                        Serial.print(" y ");
+                        Serial.println(maxx[i + 1]);
+                        if (maxx[i] < maxx[i + 1]) {
+                            Serial.println("Triangular");
+                            tri++;
+                        } else {
+                            Serial.println("S o C");
+                            soc++;
+                        }
+                    }
+                }
+                if (tri >= soc) {
+                    lcd_1.print("triangular");
+                    tri = 0;
+                    soc = 0;
+                } else if (tri < soc) {
+                    lcd_1.print("sinosoidal o");
+                    delay(200);
+                    lcd_1.clear();
+                    lcd_1.print("Cuadrada");
+                    tri = 0;
+                    soc = 0;
+                }
+
+                delete[] maxx;
+            }
+
+            delete[] ultimosegundo;
+            ultimosegundo = nullptr;
+            delete[] arraymomentaneo;
+            arraymomentaneo = nullptr;
+
+            sizearraymomentaneo = 0;
+            sizeultimo = 0;
+        }
+    }
 }
+
 // existen limitaciones con el tinkercad o me falto optimizacion, terminado los puntos de frecuencia y amplitud usando puntadores y memoria
 // dinamica ultima parte diferenciar una funcion a otra.
 
